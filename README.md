@@ -12,12 +12,12 @@ Planning assumptions: one company, USD, card payments, fictional data, and Strip
 
 ## Sprint 1 delivery
 
-This first change establishes the project brief, README, ignore rules, and PR template. Two further PRs are planned:
+The project brief, README, ignore rules, and PR template establish the project framing. This change adds:
 
-1. Detailed requirements and all eight written user stories with acceptance criteria.
-2. Git workflow, conventional-commit guidance, and mentor-review preparation.
+- [Detailed requirements](docs/requirements.md): five functional requirements and three measurable nonfunctional targets.
+- [Eight user stories](docs/stories/README.md): individual review documents with 36 acceptance criteria and requirement/dependency mappings.
 
-Those documents are prepared locally and will be introduced by their respective PRs.
+PR 3 will introduce the Git workflow, conventional-commit guidance, and mentor-review preparation.
 
 ## Current status
 
