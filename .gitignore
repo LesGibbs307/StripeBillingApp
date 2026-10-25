@@ -426,3 +426,47 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# RepRise local configuration and artifacts
+# Future .NET build/test artifacts
+**/bin/
+**/obj/
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+artifacts/
+
+# Local IDE state
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+**/appsettings.Local.json
+**/appsettings.*.Local.json
+**/secrets.json
+*.pfx
+*.p12
+*.key
+
+# Local data and logs
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.log
+logs/
+
+# OS and optional future frontend artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+node_modules/
