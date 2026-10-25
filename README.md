@@ -17,11 +17,11 @@ The project brief, README, ignore rules, and PR template establish the project f
 - [Detailed requirements](docs/requirements.md): five functional requirements and three measurable nonfunctional targets.
 - [Eight user stories](docs/stories/README.md): individual review documents with 36 acceptance criteria and requirement/dependency mappings.
 
-PR 3 will introduce the Git workflow, conventional-commit guidance, and mentor-review preparation.
+The final documentation stage adds the [Git workflow](CONTRIBUTING.md), [delivery record](docs/pull-request-plan.md), and [mentor-review checklist](docs/sprint-1-review.md).
 
 ## Current status
 
-The local project is connected to [LesGibbs307/StripeBillingApp](https://github.com/LesGibbs307/StripeBillingApp). Branch protection and merged-PR evidence have not been verified. Requirements and mentor review remain pending.
+The local project is connected to [LesGibbs307/StripeBillingApp](https://github.com/LesGibbs307/StripeBillingApp). Framing and requirements are merged into main; see the delivery record for the verified PR history. Main protection remains unverified. Requirements and mentor review remain pending.
 
 No application code, dependencies, or payment integration exists. There are no build/run steps yet. The .NET solution is deferred until after requirements review, consistent with defining the project before implementation.
 

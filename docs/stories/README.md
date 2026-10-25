@@ -17,6 +17,6 @@ The requirements document is the source of truth. Keep these review copies synch
 
 ## How these become three PRs
 
-PR 1 introduces project framing. PR 2 introduces the requirements and all eight story documents. PR 3 introduces the contribution workflow and mentor-review preparation. The sprint requires three meaningful PRs, not one PR per story and not three implemented features.
+The three planned stages are project framing, requirements and stories, then contribution workflow and mentor-review preparation. Actual GitHub PR numbers differ because an additional integration PR was merged. The sprint requires three meaningful PRs, not one PR per story and not three implemented features.
 
-The detailed three-PR workflow and review preparation will be introduced in PR 3.
+See the [delivery record](../pull-request-plan.md) and [review checklist](../sprint-1-review.md).
