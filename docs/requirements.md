@@ -147,7 +147,7 @@ Stripe's [webhook documentation](https://docs.stripe.com/webhooks) informs signa
 
 ## 7. Sprint 1 acceptance
 
-The mentor and learner review this document together, the learner explains exclusions confidently, and a public repo demonstrates the files, protected main, and at least three merged PRs with conventional commits. The review checklist and evidence register will be introduced in PR 3.
+The mentor and learner review this document together, the learner explains exclusions confidently, and a public repo demonstrates the files, protected main, and at least three merged PRs with conventional commits. Track evidence in the [review checklist](sprint-1-review.md) and [delivery record](pull-request-plan.md).
 
 **Requirements review:** Review assumptions and acceptance criteria, and record any corrections and their reasons in the review log.
 
