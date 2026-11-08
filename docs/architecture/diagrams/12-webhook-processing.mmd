@@ -1,0 +1,46 @@
+flowchart TD
+    A["Raw bytes and Stripe signature"] --> Sig{"Signature valid?"}
+    Sig -->|No| Reject["400; no Billing mutation"]
+    Sig -->|Yes| Read["Read durable event receipt"]
+    Read --> DB{"Database available?"}
+    DB -->|No| Retry["503; no successful acknowledgement"]
+    DB -->|Yes| Dup{"Already handled?"}
+    Dup -->|Yes| Ack["200; no second update"]
+    Dup -->|No| Type{"Supported event?"}
+    Type -->|No| Ignore["Prepare Ignored receipt"]
+    Type -->|Yes| Lookup{"Known request and expected test environment/account?"}
+    Lookup -->|No| Quar["Prepare Quarantined receipt and safe diagnostic"]
+    Lookup -->|Yes| Retrieve["Retrieve current session and expanded PaymentIntent"]
+    Retrieve --> Available{"Provider result?"}
+    Available -->|Transient failure| Retry
+    Available -->|Object invalid or absent| Quar
+    Available -->|Available| Match{"Token, session, mode, amount and currency match?"}
+    Match -->|No| Quar
+    Match -->|Yes| TX["Begin transaction; lock request and recheck receipt/binding"]
+    TX --> Recheck{"Concurrent result?"}
+    Recheck -->|Receipt now handled| Existing["End transaction without mutation"]
+    Existing --> Ack
+    Recheck -->|Binding conflict| Rollback["Rollback; prepare quarantine diagnostic"]
+    Rollback --> Quar
+    Recheck -->|Safe to proceed| Bind["Bind verified session if missing; enforce unique provider IDs"]
+    Bind --> Success{"Session paid and successful intent amount/currency match?"}
+    Success -->|Yes| Paid["Set Paid once; preserve original PaidAt"]
+    Success -->|No| Exp{"Current session expired and request not Paid?"}
+    Exp -->|Yes| Expired["Set Expired"]
+    Exp -->|No| Noop["No payment-state change"]
+    Paid --> Receipt["Insert event receipt in payment transaction"]
+    Expired --> Receipt
+    Noop --> Receipt
+    Receipt --> Commit{"Commit outcome?"}
+    Commit -->|Success| Ack
+    Commit -->|Duplicate key| Resolve["Rollback; read committed event receipt"]
+    Commit -->|Other failure| Retry
+    Resolve --> Found{"Handled receipt exists?"}
+    Found -->|Yes| Ack
+    Found -->|No| Retry
+    Ignore --> Durable["Commit diagnostic receipt without payment mutation"]
+    Quar --> Durable
+    Durable --> Saved{"Commit outcome?"}
+    Saved -->|Success| Ack
+    Saved -->|Duplicate key| Resolve
+    Saved -->|Other failure| Retry

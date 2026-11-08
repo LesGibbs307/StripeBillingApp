@@ -1,0 +1,35 @@
+flowchart TD
+    A["Authorized create/resume with stable RequestIdentity"] --> Input{"Input valid; no client price/currency?"}
+    Input -->|No| Bad["400; no provider call"]
+    Input -->|Yes| E{"Request identity already exists?"}
+    E -->|Yes| P{"Customer/service fingerprint matches?"}
+    P -->|No| X["409 identity conflict"]
+    P -->|Yes| Ready{"Known session?"}
+    Ready -->|Yes| Same["Return original state and available URL; no replacement"]
+    Ready -->|No| Retry["B2 safe retry/reconciliation; no direct new POST"]
+    E -->|No| T["Begin short database transaction"]
+    T --> C["Validate customer and capture locked active service through contracts"]
+    C --> V{"Customer, service and charge bounds valid?"}
+    V -->|No| R["Rollback; validation response; no Stripe call"]
+    V -->|Yes| Save["Persist Pending intent, snapshot, frozen parameters and key"]
+    Save --> Commit{"Commit outcome?"}
+    Commit -->|Unique identity conflict| Reload["Rollback and load winning request"]
+    Reload --> P
+    Commit -->|Other failure| Fail["503; no provider call"]
+    Commit -->|Success| Lease["Acquire per-request database lease"]
+    Lease --> Win{"Lease acquired?"}
+    Win -->|No| Wait["202; preserve identity"]
+    Win -->|Yes| First["Durably record FirstAttemptAt before network call"]
+    First --> Stored{"Persisted?"}
+    Stored -->|No| Fail
+    Stored -->|Yes| Stripe["Call Stripe with frozen payload and stored key"]
+    Stripe --> Response{"Outcome?"}
+    Response -->|Timeout or transient error| Amb["Keep current payment state; resume through B2"]
+    Response -->|Definitive invalid parameters| Invalid["Persist Rejected creation status; no Paid inference"]
+    Response -->|Session returned| Attach["Lock request; validate response, lease and session binding"]
+    Attach --> Bind{"Binding null or same, and response valid?"}
+    Bind -->|No| Hold["Preserve existing record; flag reconciliation"]
+    Bind -->|Yes| Write["Attach session and URL; never downgrade payment status"]
+    Write --> Done{"Commit succeeds?"}
+    Done -->|No| Recover["503; B2 or webhook can recover"]
+    Done -->|Yes| URL["201 first creation or 200 resume with original state"]

@@ -1,0 +1,14 @@
+flowchart TD
+    P["Operator supplies demo credentials securely"] --> U["Identity creates hashed password and Admin role membership"]
+    U --> Ready["Provisioned account ready; setup completes"]
+    L["Login submitted with CSRF token"] --> Store{"Identity store available?"}
+    Store -->|No| Down["503; no session"]
+    Store -->|Yes| V
+    V{"CSRF valid and rate limit available?"}
+    V -->|No| R["400 or 429; no session"]
+    V -->|Yes| C{"Credentials valid, enabled Admin, not locked?"}
+    C -->|No| G["Generic 401; record sanitized failed attempt"]
+    C -->|Yes| S["Persist random session ticket hash and expiry"]
+    S --> DB{"Commit succeeded?"}
+    DB -->|No| E["503; do not issue authenticated cookie"]
+    DB -->|Yes| OK["Issue cookie; allow admin navigation"]

@@ -141,7 +141,7 @@ As a fitness-company administrator, I want to inspect payments so I can confirm 
 
 Minimum request states: Pending, Paid, Expired. A declined attempt leaves Pending while Checkout remains usable. Browser cancellation is not proof of expiry. Confirmed expiry may set Expired; authoritative verified success takes precedence if events arrive out of order. Paid is terminal within this MVP because reversals are outside scope.
 
-Represent amounts in integer minor units conceptually (125.00 USD = 12,500 cents). Preserve the agreed amount on the request. Use event and provider payment/session identities to prevent duplicates and correlate updates. Exact event subscriptions, SDK versions, persistence, and authentication mechanism are later design decisions.
+Represent amounts in integer minor units conceptually (125.00 USD = 12,500 cents). Preserve the agreed amount on the request. Use event and provider payment/session identities to prevent duplicates and correlate updates. The [proposed modular monolith design](architecture/README.md) specifies event subscriptions, persistence, authentication, data ownership and module workflows. Compatible dependency and API versions will be pinned when implementation begins. These design choices do not change the MVP acceptance criteria.
 
 Stripe's [webhook documentation](https://docs.stripe.com/webhooks) informs signature/raw-body verification, duplicate handling, and ordering requirements. This is not a claim of an implemented integration.
 

@@ -1,0 +1,135 @@
+{
+  "reviewDate": "2026-11-08",
+  "mermaid": "12.3.0",
+  "cli": "12.2.0",
+  "diagrams": [
+    {
+      "file": "01-system-overview.mmd",
+      "title": "System diagram",
+      "sha256": "d73397208ebfedd908e98c5698f6c0fc0afb64bd295c93e1143e15016eb270dc",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Moved browser execution outside the server process and the Billing Stripe adapter inside it."
+    },
+    {
+      "file": "02-purchase-sequence.mmd",
+      "title": "End-to-end purchase",
+      "sha256": "4531ee1e1aa6b86e42a31e52023d41e623a836c2fa21607db6d8f3b842a2ba4c",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Fixed parser-breaking semicolons; modeled browser return and webhook as independent paths; showed authorization."
+    },
+    {
+      "file": "03-admin-login.mmd",
+      "title": "Provisioning and login workflow",
+      "sha256": "fed880befdc4af969e7aedbd7182fa59c50a8718d5bd7206b1466799a138f346",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Separated one-time provisioning from login and added Identity-store failure."
+    },
+    {
+      "file": "04-authorization-and-logout.mmd",
+      "title": "Guard and logout workflow",
+      "sha256": "6dc85c8dea7f56d3362f087d0e1c58fa1e01c94214e50f25474817f52652a7be",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Added fail-closed session-store failure and separated read, mutation and logout paths."
+    },
+    {
+      "file": "05-customer-write.mmd",
+      "title": "Write workflow",
+      "sha256": "14a8f2831ef6d7bb0e15c47aa18c3c8cbe8326d6280af2ce9002bee08e3d8831",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Made row-version enforcement atomic at commit and distinguished conflicts from dependency failures."
+    },
+    {
+      "file": "06-customer-read-and-association.mmd",
+      "title": "Read and association workflow",
+      "sha256": "dc83ce750671a79195c63c11eac74262c0138365e796dead4c71d4da6421f60d",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Added invalid-input and database-failure outcomes; retained stable-ID association."
+    },
+    {
+      "file": "07-service-management.mmd",
+      "title": "Create/edit/deactivate workflow",
+      "sha256": "99bdc9bba2354e65056d8da37a3f60844442c48bd5fa26fb066da68009f8db50",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Added commit-time version conflict; retained history and deactivation behavior."
+    },
+    {
+      "file": "08-service-price-snapshot.mmd",
+      "title": "Trusted snapshot workflow",
+      "sha256": "6288b541265f42815cbf12e10e486e413c9cae9399be458b0578baca3eac88d2",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Added rollback/lock-release path when snapshot commit fails."
+    },
+    {
+      "file": "09-checkout-creation.mmd",
+      "title": "B1 — Capture and create Checkout",
+      "sha256": "9fdd64525674b84951df176bc2d85ff6c2574084e0967f08013524f7e693db26",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Prevented resume from bypassing safe recovery; added first-attempt persistence and binding/concurrency outcomes."
+    },
+    {
+      "file": "10-checkout-recovery.mmd",
+      "title": "B2 — Ambiguous creation and recovery",
+      "sha256": "f5af78e634b6a3466f74a2d73337f1d9bbe529420e36d2b3da35329551d7c9c9",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Added lease, never-attempted request, rejected request, safe-window, binding and persistence decisions."
+    },
+    {
+      "file": "11-hosted-payment.mmd",
+      "title": "B3 — Hosted payment and browser return",
+      "sha256": "76a5a1a37ebfb13d958d82d969c4998264b0574b6a0ec7577e9a220e888692d2",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Removed misleading Pending resets; kept browser return independent of verified state."
+    },
+    {
+      "file": "12-webhook-processing.mmd",
+      "title": "B4 — Webhook verification and atomic processing",
+      "sha256": "884692740020850fbcac6055ca5dfa1dc26481c808f3721b93c456fe6b6422dd",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Added diagnostic commit failure, concurrent receipt recheck, session binding and duplicate-key rollback paths."
+    },
+    {
+      "file": "13-payment-states.mmd",
+      "title": "B5 — Payment state machine",
+      "sha256": "cbf21f45d5706c3f77ac120bfc9442b15d62a64255bf0ecf629c5919cbf17cbf",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Made Expired no-op behavior explicit while preserving authoritative-success precedence."
+    },
+    {
+      "file": "14-outage-recovery.mmd",
+      "title": "B6 — Outage and acknowledgement recovery",
+      "sha256": "ea2179b3a77d3ead970c7ebea0fd70663cf60ba078a3323e31a07aecffb76276",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Added signature/evidence verification and provider response; removed ambiguous semicolons."
+    },
+    {
+      "file": "15-payment-queries.mmd",
+      "title": "B7 — Admin payment queries",
+      "sha256": "20538f01f1791aaeba0e2b47a8f52b647ea87afc5ab30b87f502534c63882519",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Added invalid-query and dependency-failure outcomes."
+    },
+    {
+      "file": "16-data-relationships.mmd",
+      "title": "Relationships",
+      "sha256": "5e4ebf19d054b0f240edfd94592a16af7cd12498799e16b2227b814119602d78",
+      "syntaxAndRender": "PASS",
+      "logicReview": "Reviewed and corrected",
+      "change": "Added account/environment components of event key and nullable relationship/reference annotations."
+    }
+  ]
+}

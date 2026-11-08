@@ -1,0 +1,73 @@
+# Relationships
+
+[Diagram index](README.md) | [Mermaid source](16-data-relationships.mmd) | [SVG](rendered/16-data-relationships.svg) | [PNG](rendered/16-data-relationships.png) | [Full workflow context](../data-model.md)
+
+```mermaid
+erDiagram
+    ApplicationUser ||--o{ UserRole : assigned
+    Role ||--o{ UserRole : contains
+    ApplicationUser ||--o{ AdminSession : authenticates
+    ApplicationUser ||--o{ PaymentRequest : creates
+    Customer ||--o{ PaymentRequest : purchases
+    Service ||--o{ PaymentRequest : describes
+    PaymentRequest o|--o{ WebhookEvent : correlates
+    ApplicationUser {
+        uuid Id PK
+        string UserName
+        string PasswordHash
+        boolean IsEnabled
+    }
+    Role {
+        uuid Id PK
+        string Name
+    }
+    UserRole {
+        uuid UserId PK,FK
+        uuid RoleId PK,FK
+    }
+    AdminSession {
+        uuid Id PK
+        uuid UserId FK
+        string TicketHash UK
+        datetime ExpiresAt
+        datetime RevokedAt "nullable"
+    }
+    Customer {
+        uuid Id PK
+        string Name
+        string Email
+        bytes RowVersion
+    }
+    Service {
+        uuid Id PK
+        string Name
+        bigint AmountMinor
+        string Currency
+        boolean IsActive
+        bytes RowVersion
+    }
+    PaymentRequest {
+        uuid Id PK
+        uuid RequestIdentity UK
+        uuid CustomerId FK
+        uuid ServiceId FK
+        uuid CreatedByUserId FK
+        string ServiceNameSnapshot
+        bigint AmountMinor
+        string Currency
+        string Status
+        string CreationStatus
+        string StripeCheckoutSessionId UK "nullable; unique within account and environment"
+        string StripePaymentIntentId UK "nullable; unique within account and environment"
+        datetime PaidAt "nullable until Paid"
+    }
+    WebhookEvent {
+        string StripeAccountId PK
+        boolean IsLive PK
+        string StripeEventId PK
+        uuid PaymentRequestId FK "nullable for unknown or unsupported events"
+        string Outcome
+        datetime ReceivedAt
+        datetime ProcessedAt
+    }
+```

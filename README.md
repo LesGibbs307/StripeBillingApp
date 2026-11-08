@@ -19,6 +19,12 @@ The project brief, README, ignore rules, and PR template establish the project f
 
 The final documentation stage adds the [Git workflow](CONTRIBUTING.md), [delivery record](docs/pull-request-plan.md), and [mentor-review checklist](docs/sprint-1-review.md).
 
+## Proposed MVP architecture
+
+The [modular monolith design](docs/architecture/README.md) defines Identity, Customers, Service Catalog and Billing inside one ASP.NET Core application. React/TypeScript supplies the UI; EF Core code-first persists to SQL Server. The Stripe webhook is hosted inside Billing.
+
+The package includes [module workflows](docs/architecture/README.md#read-the-implementation-workflows), a [data model and relationship diagram](docs/architecture/data-model.md), and [coverage of all 36 acceptance criteria](docs/architecture/coverage.md). These are design documents; implementation and runtime verification have not started.
+
 ## Current status
 
 The local project is connected to [LesGibbs307/StripeBillingApp](https://github.com/LesGibbs307/StripeBillingApp). Framing and requirements are merged into main; see the delivery record for the verified PR history. Main protection remains unverified. Requirements and mentor review remain pending.
