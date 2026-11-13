@@ -1,4 +1,6 @@
 # Billing module
+
+> Earlier one-time-payment design. See the [current component image](RepRise.jpg) for the subscription-onboarding mockup; these written details have not yet been reconciled with it.
 [Architecture index](README.md) · **Owner:** US-04 through US-08, FR-04/05
 
 Owns a PaymentRequest aggregate and WebhookEvent receipts. One request is one purchase of one service, quantity one. A separate Payment table is unnecessary for the MVP: the request stores the single successful provider payment reference. Do not create Subscription, Plan, Membership, Invoice or Refund models.
@@ -17,43 +19,6 @@ Reject client-supplied price/currency fields. The React form generates a random 
 Common responses: 400 validation, 401/403 authorization, 404 missing record, 409 conflict, 202 still creating/reconciling, 503 temporary dependency failure. Responses carry RequestId when already allocated and a safe error code; never claim Paid on error. No stack traces or provider secrets.
 
 ## B1 — Capture and create Checkout
-```mermaid
-flowchart TD
-    A["Authorized create/resume with stable RequestIdentity"] --> Input{"Input valid; no client price/currency?"}
-    Input -->|No| Bad["400; no provider call"]
-    Input -->|Yes| E{"Request identity already exists?"}
-    E -->|Yes| P{"Customer/service fingerprint matches?"}
-    P -->|No| X["409 identity conflict"]
-    P -->|Yes| Ready{"Known session?"}
-    Ready -->|Yes| Same["Return original state and available URL; no replacement"]
-    Ready -->|No| Retry["B2 safe retry/reconciliation; no direct new POST"]
-    E -->|No| T["Begin short database transaction"]
-    T --> C["Validate customer and capture locked active service through contracts"]
-    C --> V{"Customer, service and charge bounds valid?"}
-    V -->|No| R["Rollback; validation response; no Stripe call"]
-    V -->|Yes| Save["Persist Pending intent, snapshot, frozen parameters and key"]
-    Save --> Commit{"Commit outcome?"}
-    Commit -->|Unique identity conflict| Reload["Rollback and load winning request"]
-    Reload --> P
-    Commit -->|Other failure| Fail["503; no provider call"]
-    Commit -->|Success| Lease["Acquire per-request database lease"]
-    Lease --> Win{"Lease acquired?"}
-    Win -->|No| Wait["202; preserve identity"]
-    Win -->|Yes| First["Durably record FirstAttemptAt before network call"]
-    First --> Stored{"Persisted?"}
-    Stored -->|No| Fail
-    Stored -->|Yes| Stripe["Call Stripe with frozen payload and stored key"]
-    Stripe --> Response{"Outcome?"}
-    Response -->|Timeout or transient error| Amb["Keep current payment state; resume through B2"]
-    Response -->|Definitive invalid parameters| Invalid["Persist Rejected creation status; no Paid inference"]
-    Response -->|Session returned| Attach["Lock request; validate response, lease and session binding"]
-    Attach --> Bind{"Binding null or same, and response valid?"}
-    Bind -->|No| Hold["Preserve existing record; flag reconciliation"]
-    Bind -->|Yes| Write["Attach session and URL; never downgrade payment status"]
-    Write --> Done{"Commit succeeds?"}
-    Done -->|No| Recover["503; B2 or webhook can recover"]
-    Done -->|Yes| URL["201 first creation or 200 resume with original state"]
-```
 
 Create the request and capture the service in one transaction. A unique RequestIdentity constraint handles racing submissions: the loser rolls back, reloads the winner and compares the fingerprint. Lock ordering is customer, service, then payment request for new creation; webhook transactions touch only Billing.
 
@@ -64,37 +29,6 @@ Record FirstAttemptAt before calling Stripe. A short database lease serializes n
 ## B2 — Ambiguous creation and recovery
 Stripe API v1 may retain the first response including an error, and keys can be removed after 24 hours. Therefore indefinite resubmission is unsafe. See [Stripe idempotency semantics](https://docs.stripe.com/api/idempotent_requests).
 
-```mermaid
-flowchart TD
-    A["Resume request missing Checkout result"] --> Lease{"Acquire persisted lease?"}
-    Lease -->|No| Wait["202; preserve identity"]
-    Lease -->|Yes| K{"Known session after reload?"}
-    K -->|Yes| R["Return original session/state"]
-    K -->|No| Rej{"Creation definitively rejected?"}
-    Rej -->|Yes| Stop["Show creation error; operator resolves; no automatic changed payload"]
-    Rej -->|No| First{"FirstAttemptAt exists?"}
-    First -->|No| Mark["Persist FirstAttemptAt before first POST"]
-    Mark --> OK{"Commit succeeds?"}
-    OK -->|No| Error["503; no provider call"]
-    OK -->|Yes| Retry["Call with identical frozen payload and original key"]
-    First -->|Yes| W{"Under 23 hours and no cached server-error ambiguity?"}
-    W -->|Yes| Retry
-    W -->|No| Rec["Persist NeedsReconciliation"]
-    Retry --> O{"Outcome?"}
-    O -->|Session| Bind["Validate session, lock request and check binding"]
-    O -->|Definitive rejection| Stop
-    O -->|Transient or ambiguous| Rec
-    Rec --> Find["Read provider sessions; fully paginate attempt window; match ID and token"]
-    Find --> M{"Exactly one verified match?"}
-    M -->|Yes| Bind
-    M -->|No or provider unavailable| Hold["Keep unresolved; safe diagnostic; no new Checkout POST"]
-    Bind --> Valid{"Valid and binding null or same?"}
-    Valid -->|No| Hold
-    Valid -->|Yes| Save["Attach session and Ready creation status; preserve payment state"]
-    Save --> Commit{"Commit succeeds?"}
-    Commit -->|No| Error
-    Commit -->|Yes| R
-```
 
 Use a Billing in-process recovery task every 30 seconds, with persisted leases and bounded exponential backoff (1, 2, 4 seconds for immediate transient retries; never endless retries on a web request). Reconciliation uses read-only Stripe API calls through the same configured test account and validates the entire frozen purchase. Never log the correlation token. No raw Checkout payloads are stored in logs.
 
@@ -103,20 +37,6 @@ Zero matches does not prove a failed creation when provider history/visibility i
 A definitively rejected provider payload remains on the original request with a safe creation error. Correct configuration before resuming; never mutate parameters for an identity already sent. If purchase terms must change, the original must be conclusively nonpayable before a distinct purchase is created. This operational exception does not add a refund or payment-management feature.
 
 ## B3 — Hosted payment and browser return
-```mermaid
-flowchart TD
-    L["Client opens manually shared Checkout link"] --> S["Stripe displays frozen service / USD amount"]
-    S --> A{"Payment outcome"}
-    A -->|Successful card payment| W["Stripe emits signed event independently of browser"]
-    W --> H["B4 verifies and records payment"]
-    A -->|Declined card| D["Stripe shows decline; no app state change"]
-    D --> S
-    A -->|Cancel or close browser| P["No app state change; no success or expiry inferred"]
-    A -->|Session unavailable or expired| E["Stripe rejects payment; verified expiry may set Expired"]
-    A -->|Return to app| R["Static confirmation-processing or cancellation message"]
-    R --> N["Ignore query parameters for payment state; expose no business data"]
-    W -.->|Client may return| R
-```
 
 Clients need no app login. Checkout links grant no admin permissions. Return/cancel pages expose no customer details, request history or privileged API tokens. Return URLs do not carry business data. The payment view remains Pending unless a verified event has already changed it; a browser return must never overwrite a legitimately Paid result. No appointment, membership entitlement or email is produced.
 
@@ -125,54 +45,6 @@ Subscribe to snapshot events checkout.session.completed and checkout.session.exp
 
 Verify the Stripe-Signature using the SDK against the original raw request bytes, with its normal timestamp tolerance and a dedicated endpoint secret. Keep the host clock synchronized. Stripe documents raw-body verification, possible duplicates and unordered delivery in its [webhook guide](https://docs.stripe.com/webhooks).
 
-```mermaid
-flowchart TD
-    A["Raw bytes and Stripe signature"] --> Sig{"Signature valid?"}
-    Sig -->|No| Reject["400; no Billing mutation"]
-    Sig -->|Yes| Read["Read durable event receipt"]
-    Read --> DB{"Database available?"}
-    DB -->|No| Retry["503; no successful acknowledgement"]
-    DB -->|Yes| Dup{"Already handled?"}
-    Dup -->|Yes| Ack["200; no second update"]
-    Dup -->|No| Type{"Supported event?"}
-    Type -->|No| Ignore["Prepare Ignored receipt"]
-    Type -->|Yes| Lookup{"Known request and expected test environment/account?"}
-    Lookup -->|No| Quar["Prepare Quarantined receipt and safe diagnostic"]
-    Lookup -->|Yes| Retrieve["Retrieve current session and expanded PaymentIntent"]
-    Retrieve --> Available{"Provider result?"}
-    Available -->|Transient failure| Retry
-    Available -->|Object invalid or absent| Quar
-    Available -->|Available| Match{"Token, session, mode, amount and currency match?"}
-    Match -->|No| Quar
-    Match -->|Yes| TX["Begin transaction; lock request and recheck receipt/binding"]
-    TX --> Recheck{"Concurrent result?"}
-    Recheck -->|Receipt now handled| Existing["End transaction without mutation"]
-    Existing --> Ack
-    Recheck -->|Binding conflict| Rollback["Rollback; prepare quarantine diagnostic"]
-    Rollback --> Quar
-    Recheck -->|Safe to proceed| Bind["Bind verified session if missing; enforce unique provider IDs"]
-    Bind --> Success{"Session paid and successful intent amount/currency match?"}
-    Success -->|Yes| Paid["Set Paid once; preserve original PaidAt"]
-    Success -->|No| Exp{"Current session expired and request not Paid?"}
-    Exp -->|Yes| Expired["Set Expired"]
-    Exp -->|No| Noop["No payment-state change"]
-    Paid --> Receipt["Insert event receipt in payment transaction"]
-    Expired --> Receipt
-    Noop --> Receipt
-    Receipt --> Commit{"Commit outcome?"}
-    Commit -->|Success| Ack
-    Commit -->|Duplicate key| Resolve["Rollback; read committed event receipt"]
-    Commit -->|Other failure| Retry
-    Resolve --> Found{"Handled receipt exists?"}
-    Found -->|Yes| Ack
-    Found -->|No| Retry
-    Ignore --> Durable["Commit diagnostic receipt without payment mutation"]
-    Quar --> Durable
-    Durable --> Saved{"Commit outcome?"}
-    Saved -->|Success| Ack
-    Saved -->|Duplicate key| Resolve
-    Saved -->|Other failure| Retry
-```
 
 Correlation rules:
 - Require the local RequestId, persisted correlation token, current session metadata and frozen amount/currency to agree. Validate event/session livemode=false and use only the configured account's credentials. Connect/multi-account events are not supported.
@@ -187,60 +59,10 @@ Concurrency: lock the PaymentRequest row before state changes; insert a uniquely
 
 ## B5 — Payment state machine
 CreationStatus (Creating, Ready, NeedsReconciliation, Rejected) describes link creation and is separate from payment Status.
-```mermaid
-stateDiagram-v2
-    [*] --> Pending: Request persisted
-    Pending --> Pending: Decline / browser cancel / return / transient failure
-    Pending --> Paid: Verified current payment success
-    Pending --> Expired: Verified current session expiry
-    Expired --> Paid: Verified authoritative success wins
-    Expired --> Expired: Duplicate expiry / browser return / no success evidence
-    Paid --> Paid: Duplicate / older expiry / other later event
-```
 No transition out of Paid in this MVP. Refunds are future scope. A delayed expiry event must retrieve current state before acting. Expired requests are retained; retrying their original identity does not create another session.
 
 ## B6 — Outage and acknowledgement recovery
-```mermaid
-sequenceDiagram
-    participant S as Stripe / test resend
-    participant H as Billing host
-    participant D as SQL
-    S->>H: Delivery during five-minute outage
-    Note over H: Unavailable, no successful acknowledgement
-    Note over H: Restore host, configuration and database
-    S->>H: Resend valid success event with fresh signature
-    Note over H: Verify fresh signature, then check durable receipt
-    H->>S: Retrieve authoritative session
-    S-->>H: Session and payment evidence
-    Note over H: Validate environment, correlation and payment evidence
-    H->>D: Atomic request update + receipt
-    alt Database commit fails
-        D-->>H: Failure
-        H-->>S: 503, retry permitted
-    else Database commit succeeds
-        D-->>H: Durable Paid + receipt
-        H-->>S: 200
-        S->>H: Duplicate event, including after lost response
-        Note over H: Verify duplicate delivery signature first
-        H->>D: Read committed receipt
-        H-->>S: 200, no second business update
-    end
-```
 Recovery target: within 60 seconds of receipt after restoration, with dependencies available, both replay deliveries yield one payment row and one Paid transition. Use Stripe resend or a fresh valid signed fixture; a five-minute-old raw signature is not an acceptable replay test. This design uses synchronous durable handling, not a queue. Provider calls have timeouts; failure to finish returns non-2xx for later delivery.
 
 ## B7 — Admin payment queries
-```mermaid
-flowchart TD
-    A["Authorized list/detail"] --> V{"ID or pagination valid?"}
-    V -->|No| Invalid["400; no query"]
-    V -->|Yes| B["Read Billing projection from SQL; no Stripe call"]
-    B -->|Database failure| Down["503; no successful result"]
-    B --> F{"Detail exists / list has rows?"}
-    F -->|Missing detail| N["404"]
-    F -->|Empty list| E["200 explicit empty list"]
-    F -->|Rows| C["Batch customer display summaries by stable IDs"]
-    C -->|Dependency failure| Down
-    C -->|Success| O["200 current customer, frozen service/amount, status and timestamps"]
-    O --> UI["Show verified state; creation issues separately"]
-```
 Default page size 25, maximum 100; order CreatedAt descending then Id descending. Use bounded projections and a matching index; no per-row Stripe calls or customer queries. Detail includes RequestId, CustomerId, ServiceId, snapshot, currency, status, available session/intent IDs, CreatedAt, PaidAt and creation status; Checkout URL only for authorized staff. A customer edit can change display name, never customer association. Service/price always come from the snapshot. Do not include raw events, credentials, correlation tokens or provider payloads in DTOs.

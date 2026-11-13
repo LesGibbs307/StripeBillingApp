@@ -1,78 +1,11 @@
 # RepRise data model
+
+> Earlier one-time-payment design. See the [current component image](RepRise.jpg) for the subscription-onboarding mockup; these written details have not yet been reconciled with it.
 [Architecture index](README.md) · Proposed EF Core code-first relational model
 
 ## Relationships
-```mermaid
-erDiagram
-    ApplicationUser ||--o{ UserRole : assigned
-    Role ||--o{ UserRole : contains
-    ApplicationUser ||--o{ AdminSession : authenticates
-    ApplicationUser ||--o{ PaymentRequest : creates
-    Customer ||--o{ PaymentRequest : purchases
-    Service ||--o{ PaymentRequest : describes
-    PaymentRequest o|--o{ WebhookEvent : correlates
-    ApplicationUser {
-        uuid Id PK
-        string UserName
-        string PasswordHash
-        boolean IsEnabled
-    }
-    Role {
-        uuid Id PK
-        string Name
-    }
-    UserRole {
-        uuid UserId PK,FK
-        uuid RoleId PK,FK
-    }
-    AdminSession {
-        uuid Id PK
-        uuid UserId FK
-        string TicketHash UK
-        datetime ExpiresAt
-        datetime RevokedAt "nullable"
-    }
-    Customer {
-        uuid Id PK
-        string Name
-        string Email
-        bytes RowVersion
-    }
-    Service {
-        uuid Id PK
-        string Name
-        bigint AmountMinor
-        string Currency
-        boolean IsActive
-        bytes RowVersion
-    }
-    PaymentRequest {
-        uuid Id PK
-        uuid RequestIdentity UK
-        uuid CustomerId FK
-        uuid ServiceId FK
-        uuid CreatedByUserId FK
-        string ServiceNameSnapshot
-        bigint AmountMinor
-        string Currency
-        string Status
-        string CreationStatus
-        string StripeCheckoutSessionId UK "nullable; unique within account and environment"
-        string StripePaymentIntentId UK "nullable; unique within account and environment"
-        datetime PaidAt "nullable until Paid"
-    }
-    WebhookEvent {
-        string StripeAccountId PK
-        boolean IsLive PK
-        string StripeEventId PK
-        uuid PaymentRequestId FK "nullable for unknown or unsupported events"
-        string Outcome
-        datetime ReceivedAt
-        datetime ProcessedAt
-    }
-```
 
-Diagram shows core fields; the complete persistence decisions are below. All times are UTC datetimeoffset, IDs are server-generated GUIDs unless specifically supplied as RequestIdentity, and nullable fields are marked ?. WebhookEvent's actual key includes account and environment. Foreign keys use NO ACTION / restricted deletion; no cascades into business history.
+The persistence decisions below document the earlier one-time-payment design. All times are UTC datetimeoffset, IDs are server-generated GUIDs unless specifically supplied as RequestIdentity, and nullable fields are marked ?. WebhookEvent's actual key includes account and environment. Foreign keys use NO ACTION / restricted deletion; no cascades into business history.
 
 ## Identity schema
 Use ASP.NET Core Identity's standard user/role tables and supporting claim/login/token tables as required by the library. User and Role are not custom password/security implementations.

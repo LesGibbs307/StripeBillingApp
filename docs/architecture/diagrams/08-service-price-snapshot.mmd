@@ -1,9 +1,0 @@
-flowchart TD
-    B["Billing begins request transaction"] --> L["Catalog locks and reads selected service"]
-    L --> A{"Exists and active?"}
-    A -->|No| R["Reject; rollback; no Stripe call"]
-    A -->|Yes| D["Return trusted name, price, currency and version"]
-    D --> P["Billing persists immutable request snapshot"]
-    P --> C{"Commit succeeds?"}
-    C -->|No| E["Rollback and release lock; no Stripe call"]
-    C -->|Yes| S["Release lock; later edits affect only future requests"]

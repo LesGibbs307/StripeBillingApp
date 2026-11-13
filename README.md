@@ -19,11 +19,11 @@ The project brief, README, ignore rules, and PR template establish the project f
 
 The final documentation stage adds the [Git workflow](CONTRIBUTING.md), [delivery record](docs/pull-request-plan.md), and [mentor-review checklist](docs/sprint-1-review.md).
 
-## Proposed MVP architecture
+## Current architecture image
 
-The [modular monolith design](docs/architecture/README.md) defines Identity, Customers, Service Catalog and Billing inside one ASP.NET Core application. React/TypeScript supplies the UI; EF Core code-first persists to SQL Server. The Stripe webhook is hosted inside Billing.
+![RepRise component view](docs/architecture/RepRise.jpg)
 
-The package includes [module workflows](docs/architecture/README.md#read-the-implementation-workflows), a [data model and relationship diagram](docs/architecture/data-model.md), and [coverage of all 36 acceptance criteria](docs/architecture/coverage.md). These are design documents; implementation and runtime verification have not started.
+[Open RepRise.jpg](docs/architecture/RepRise.jpg) for the supplied component and subscription sign-up mockup. The [written architecture notes](docs/architecture/README.md) and Sprint 1 requirements describe the earlier one-time-payment design and have not yet been reconciled with this image.
 
 ## Current status
 

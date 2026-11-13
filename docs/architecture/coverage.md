@@ -1,4 +1,6 @@
 # MVP coverage and verification
+
+> Earlier one-time-payment design. See the [current component image](RepRise.jpg) for the subscription-onboarding mockup; these written details have not yet been reconciled with it.
 [Architecture index](README.md)
 
 **Status:** Design traceability only. Checks below are planned implementation tests, not passing results. Acceptance criterion IDs refer to the existing [story documents](../stories/README.md).
